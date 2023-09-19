@@ -736,7 +736,7 @@ def downloadDeptabsent(camp,dept):
         if dept == 'clg':
             data = Student.query.filter(Student.company == camp,Student.attendance == 'absent').all()
         else:
-            data = Student.query.filter(Student.company == camp,Student.department == dept).all()
+            data = Student.query.filter(Student.company == camp,Student.department == dept,Student.attendance == 'absent').all()
         df = pd.DataFrame([{
             'ID': student.id,
             'Name': student.name,
@@ -770,7 +770,7 @@ def downloadDeptpresent(camp,dept):
         if dept == 'clg':
             data = Student.query.filter(Student.company == camp,Student.attendance == 'present').all()
         else:
-            data = Student.query.filter(Student.company == camp,Student.department == dept).all()
+            data = Student.query.filter(Student.company == camp,Student.department == dept,Student.attendance == 'present').all()
         df = pd.DataFrame([{
             'ID': student.id,
             'Name': student.name,
