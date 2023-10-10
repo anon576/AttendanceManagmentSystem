@@ -180,8 +180,7 @@ def updateAttendance(cam):
   
     db.session.add(c)
     db.session.commit()
-    print(len(a))
-    print(len(p))
+
 
 @app.route("/subadmin",methods = ['GET','POST'])
 def subadmin():
@@ -221,44 +220,29 @@ def xlswork(file, campus):
         # Iterate through the rows and insert data into the database
         for _, row in df.iterrows():
             
-            name = row['name']
-            address = row['address']
-            dob = row['dob']
-            student_id = row['student_id']
-            department = row['department']
-            cls = row['cls']
-            phoneno = row['phoneno']
-            phoneno = str(phoneno)
-            email = row['email']
-            hash_value = hashlib.sha256(f"{name}{student_id}{department}{cls}".encode()).hexdigest()
-            
-            
-            
+            name = row['Name of Student']
+            student_id = row['College ID']
+            department = row['Branch']
+            email = f"{student_id}@ycce.in"
+            campusDate = row['Date']
+            cls = row['Section']
+            venue = row['Lab']
+            reportingtime = row['Reporting Time']
+            reportingtime= str(reportingtime)
+
+            hash_value = hashlib.sha256(f"{name}{student_id}{department}".encode()).hexdigest()
+
             student = Student(
-                name=name,department=department,cls=cls,phoneno = phoneno,email=email, hash=hash_value,student_id = student_id,company = campus
+                name=name,department=department,cls=cls,phoneno = reportingtime,email=email, hash=hash_value,student_id = student_id,company = campus
                 
             )
-         
-            # Generate QR code using hash
-            # qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
-            # qr.add_data(hash_value)
-            # qr.make(fit=True)
-            # qr_code = qr.make_image(fill_color="black", back_color="white")
-
-            # qr_codes_dir = 'qr_codes'
-            # os.makedirs(qr_codes_dir, exist_ok=True)
-            
-            # # Save QR code as an image file
-            # qr_code_path = os.path.join(qr_codes_dir, f"{student_id}.png")
-            # qr_code.save(qr_code_path)
+    
         
-            admitcardpath = createADmit(student_id,name,email,department,phoneno,address,campus,hash_value,dob)
+            admitcardpath = createADmit(student_id,name,reportingtime,campusDate,department,email,venue,hash_value,campus)
             
-            send_email(email, hash_value, admitcardpath)
+            send_email(email, admitcardpath,campus,name,campusDate,venue,reportingtime)
             db.session.add(student)
             
-
-        # Commit the changes to the database
         db.session.commit()
 
         return 'Data uploaded successfully'
@@ -266,10 +250,9 @@ def xlswork(file, campus):
         return f'Error: {str(e)}'
  
 
-def createADmit(regno,name,email,dept,mno,add,campus,hash_value,dob):
-    pdf_file = f"admitcards/{regno}.pdf"
+def createADmit(studentid,name,reportingtime,campusdate,department,email,venue,hashvalue,campus):
+    pdf_file = f"admitcards/{studentid}.pdf"
     c = canvas.Canvas(pdf_file, pagesize=letter)
-
     # Set font sizes
     title_font_size = 20
     info_font_size = 15
@@ -284,35 +267,26 @@ def createADmit(regno,name,email,dept,mno,add,campus,hash_value,dob):
     top_y = letter[1] - 20 # Adjust as needed
     bottom_y = 20  # Adjust as needed
 
-    # Draw the border lines
-    c.line(left_x, top_y, right_x, top_y)  # Top border line
-    c.line(left_x, bottom_y, right_x, bottom_y)  # Bottom border line
-    c.line(left_x, top_y, left_x, bottom_y)  # Left border line
-    c.line(right_x, top_y, right_x, bottom_y)  # Right border line
-
-    # Print title and date
-    # d_date = datetime.datetime.now()
-    # reg_format_date = d_date.strftime("%d-%m-%Y  %I:%M:%S %p")
-    # c.drawString(x, y, reg_format_date)
-    # y -= 36  # Adjust vertical position
-
-
-    # Add your fields here (Company Name, ID, Full Name, Gender, Age, DOB, Blood Group, Mobile Number, Address)
+    c.line(left_x, top_y, right_x, top_y)
+    c.line(left_x, bottom_y, right_x, bottom_y)
+    c.line(left_x, top_y, left_x, bottom_y)
+    c.line(right_x, top_y, right_x, bottom_y) 
     fields = [
         ('Yeshwantrao Chavan College of Engineering', ''),
-        ('College ID', regno,),
+        ('College ID', studentid),
         ('Full Name', name),
-        ('Department', dept),
+        ('Department', department),
         ('Email', email),
-        ('Date ', dob),
-        ('Degree', f'B. Tech. ({dept})'),
-        ('Reporting Time ', mno),
-        ('Venue ', add),
+        ('Date ', campusdate),
+        ('Degree', f'B. Tech. ({department})'),
+        ('Reporting Time ', reportingtime),
+        ('Venue ', venue),
     ]
-
+   
     # Iterate through fields and add them to the PDF
     for field_name, field_value in fields:
         if field_name == 'Yeshwantrao Chavan College of Engineering':
+            print("here4")
             c.setFont("Helvetica", 12)
             c.setFillColor(colors.black)
             c.drawString(200, y, "Nagar Yuwak Shikshan Sanstha's")
@@ -438,7 +412,7 @@ def createADmit(regno,name,email,dept,mno,add,campus,hash_value,dob):
     y-=15
 
     # Generate QR code
-    qr_data = hash_value
+    qr_data = hashvalue
     qr = qrcode.make(qr_data)
     qr.save('qrcode.png')
 
@@ -446,7 +420,7 @@ def createADmit(regno,name,email,dept,mno,add,campus,hash_value,dob):
     c.drawImage('qrcode.png', x + 375, 455, width=150, height=150)
     c.setFont("Helvetica", 15)
     c.setFillColor(colors.black)
-    c.drawString(x+411, 450, f'{campus}')
+    c.drawString(x+400, 450, f'{campus}')
 
     # Save the PDF document
     c.save()
@@ -472,6 +446,7 @@ def camp():
             date = request.form['date']
             file = request.files['file']
             a = xlswork(file,campus)
+            print(a)
             if role == "subadmin":
                 ad = SubAdmin.query.filter_by(loginid = admin_id).first()
             else : 
@@ -528,13 +503,9 @@ def updateCampus(campus):
     db.session.commit()
   
     
-
-
-
-
-def send_email(receiver_email, student_hash, pdf_path):
-    subject = "Admit Card  for Avaali Solutions"
-    body = f"Dear student,\n\nHere is your admit card for tomorrow's campus"
+def send_email(receiver_email,pdf_path,campus,name,campusdate,venue,reportingtime):
+    subject = f"Admit Card  for {campus}"
+    body = f"Dear {name},\n\nI wanted to remind you about our upcoming campus event tomorrow. Don't forget to bring your admit card for a smooth registration process.\n\nWishing you all the best of luck! You've got this!\n\nCampus Details:\nCompany Name : {campus}\nDate : {campusdate}\nLocation :{venue}\nReporting Time : {reportingtime}\n\nSee you there!\n\nBest regards\n\nT&P Cell YCCE."
 
     message = MIMEMultipart()
     message["From"] = "21070442@ycce.in"  # Replace with your email address
@@ -546,10 +517,10 @@ def send_email(receiver_email, student_hash, pdf_path):
     with open(pdf_path, "rb") as pdf_file:
         pdf_attachment = MIMEApplication(pdf_file.read(), name=os.path.basename(pdf_path))
         message.attach(pdf_attachment)
-
+    server = smtplib.SMTP("smtp.gmail.com", 587)
     try:
         # Connect to the SMTP server with TLS
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        
         server.starttls()
 
         # Log in to the SMTP server with your email credentials
@@ -669,7 +640,6 @@ def download(camp):
 
         data = Student.query.filter(Student.company == camp).all()
         df = pd.DataFrame([{
-            'ID': student.id,
             'Name': student.name,
             'Student ID': student.student_id,
             'Department': student.department,
@@ -703,7 +673,6 @@ def downloadDept(camp,dept):
 
         
         df = pd.DataFrame([{
-            'ID': student.id,
             'Name': student.name,
             'Student ID': student.student_id,
             'Department': student.department,
@@ -738,7 +707,6 @@ def downloadDeptabsent(camp,dept):
         else:
             data = Student.query.filter(Student.company == camp,Student.department == dept,Student.attendance == 'absent').all()
         df = pd.DataFrame([{
-            'ID': student.id,
             'Name': student.name,
             'Student ID': student.student_id,
             'Department': student.department,
@@ -772,7 +740,6 @@ def downloadDeptpresent(camp,dept):
         else:
             data = Student.query.filter(Student.company == camp,Student.department == dept,Student.attendance == 'present').all()
         df = pd.DataFrame([{
-            'ID': student.id,
             'Name': student.name,
             'Student ID': student.student_id,
             'Department': student.department,

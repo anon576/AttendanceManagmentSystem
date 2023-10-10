@@ -1,35 +1,18 @@
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivymd.uix.button import MDRoundFlatIconButton
-from datetime import datetime
-from kivymd.uix.pickers import MDDatePicker
 from kivy.lang import Builder
 from kivymd.uix.snackbar import Snackbar
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.metrics import dp
-import os
-from kivymd.uix.menu import MDDropdownMenu
 import numpy as np
 from pyzbar.pyzbar import decode
 from kivy.graphics.texture import Texture
 import cv2
 from kivy.uix.image import Image
 import requests
-from sqlalchemy import and_, create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from kivy.core.window import Window
-from kivymd.uix.filemanager import MDFileManager
 from kivymd.toast import toast
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
-from email.mime.text import MIMEText
-import hashlib
-import xml.etree.ElementTree as ET
-import qrcode
-from kivymd.uix.datatables import MDDataTable
 from kivy.metrics import dp
 
 
@@ -119,7 +102,7 @@ ScreenManager:
             name: 'screen 1'
             text: 'Home'
             icon: 'home'
-            on_tab_release:root.manager.current = "subadmin"
+            on_tab_release:root.manager.current = "subadmins"
 
         MDBottomNavigationItem:
             name: 'home'
@@ -283,6 +266,9 @@ class MyApp(MDApp):
             Clock.unschedule(self.wait_interval)
             self._interval = 0
             self.snackbar = None
+
+    def h(self):
+        self.help_str.current = "subadmins"
 
     def login(self):
         self.admin_id = self.help_str.get_screen("login").ids.admin_id.text
